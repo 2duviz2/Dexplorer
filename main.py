@@ -64,6 +64,7 @@ def UpdateFolders():
                 
     if text == "":
         text = "Nothing to display"
+    UpdateWindowName()
     lines = text.splitlines()
 
 def Search(s):
@@ -116,6 +117,9 @@ def Search(s):
     if fFound:
         cursor = fFoundC
         yrealoffset = -(font.get_height() + 5) * (cursor)
+
+def UpdateWindowName():
+    pygame.display.set_caption(f"Dexplorer > {rute}")
 
 
 
