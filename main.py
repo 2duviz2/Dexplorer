@@ -132,16 +132,21 @@ def UpdateWindowName():
 
 def loadImage(r):
     global tempImage, tempImagePath
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
-        tempImagePath = temp_file.name
-    tempImage = pygame.image.load(r)
-    
-    NEW_SIZE = (100, 100)
-    rescaledImage = pygame.transform.scale(tempImage, NEW_SIZE)
-    
-    pygame.image.save(rescaledImage, tempImagePath)
-    
-    tempImage = pygame.image.load(tempImagePath)
+    if os.stat(r).st_size / (1024 * 1024) < 15:
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+                tempImagePath = temp_file.name
+            tempImage = pygame.image.load(r)
+            
+            NEW_SIZE = (100, 100)
+            rescaledImage = pygame.transform.scale(tempImage, NEW_SIZE)
+            
+            pygame.image.save(rescaledImage, tempImagePath)
+            
+            tempImage = pygame.image.load(tempImagePath)
+        except:
+            tempImage = None
+            tempImagePath = None
 
 def deleteImage():
     global tempImage, tempImagePath
