@@ -5,6 +5,7 @@ import win32api
 import subprocess
 import platform
 import drives
+import tempfile
 
 pygame.init()
 
@@ -32,6 +33,7 @@ bg = pygame.image.load('bg.png')
 bg = pygame.transform.rotate(bg, 45)
 bgy = -800
 bgrealy = 0
+outline = pygame.image.load('outline.png')
 
 font = pygame.font.Font('Font.ttf', 30)
 lineFont = pygame.font.Font('Font.ttf', 20)
@@ -42,6 +44,9 @@ files = []
 folders = []
 lines = []
 
+tempImage = None
+tempImagePath = None
+
 def UpdateFolders():
     global text, folders, files, lines
     text = ""
@@ -49,6 +54,10 @@ def UpdateFolders():
     if rute != "":
         files = drives.listContent(rute, "files")
         folders = drives.listContent(rute, "folders")
+        if files != None:
+            files.sort(key=str.lower)
+        if folders != None:
+            folders.sort(key=str.lower)
 
         if len(folders) > 0:
             for f in folders:
@@ -121,7 +130,25 @@ def Search(s):
 def UpdateWindowName():
     pygame.display.set_caption(f"Dexplorer > {rute}")
 
+def loadImage(r):
+    global tempImage, tempImagePath
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+        tempImagePath = temp_file.name
+    tempImage = pygame.image.load(r)
+    
+    NEW_SIZE = (100, 100)
+    rescaledImage = pygame.transform.scale(tempImage, NEW_SIZE)
+    
+    pygame.image.save(rescaledImage, tempImagePath)
+    
+    tempImage = pygame.image.load(tempImagePath)
 
+def deleteImage():
+    global tempImage, tempImagePath
+    if tempImagePath:
+        os.remove(tempImagePath)
+        tempImage = None
+        tempImagePath = None
 
 UpdateFolders()
 
@@ -142,9 +169,11 @@ while ejecutando:
             if evento.y < 0:
                 cursor += 1
                 yrealoffset -= font.get_height() + 5
+                deleteImage()
             else:
                 cursor -= 1
                 yrealoffset += font.get_height() + 5
+                deleteImage()
         elif evento.type == pygame.MOUSEBUTTONUP:
             if evento.button == 1:
                 if cursor < len(folders):
@@ -189,9 +218,20 @@ while ejecutando:
     #if cursor >= len(lines):
     #    cursor -= 1
     #    yrealoffset += font.get_height() + 5
+
     if cursor >= len(lines):
         yrealoffset = 0
         cursor = 0
+    if cursor >= len(folders) and len(files) > 0:
+        if str(files[cursor-len(folders)]).endswith(".png") or str(files[cursor-len(folders)]).endswith(".jpeg") or str(files[cursor-len(folders)]).endswith(".jpg"):
+            if tempImage:
+                screen.blit(outline, (688, 288))
+                screen.blit(tempImage, (690, 290))
+            else:
+                loadImage(rute+files[cursor-len(folders)])
+        else:
+            if tempImage:
+                deleteImage()
     for line in lines:
         if c < cursor-6 or c > cursor+20:
             l+=1
