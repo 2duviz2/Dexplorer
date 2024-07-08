@@ -222,16 +222,6 @@ while ejecutando:
     if cursor >= len(lines):
         yrealoffset = 0
         cursor = 0
-    if cursor >= len(folders) and len(files) > 0:
-        if str(files[cursor-len(folders)]).endswith(".png") or str(files[cursor-len(folders)]).endswith(".jpeg") or str(files[cursor-len(folders)]).endswith(".jpg"):
-            if tempImage:
-                screen.blit(outline, (688, 288))
-                screen.blit(tempImage, (690, 290))
-            else:
-                loadImage(rute+files[cursor-len(folders)])
-        else:
-            if tempImage:
-                deleteImage()
     for line in lines:
         if c < cursor-6 or c > cursor+20:
             l+=1
@@ -258,6 +248,16 @@ while ejecutando:
             l = 0
         
         y += font.get_height() + 5
+    if cursor >= len(folders) and len(files) > 0:
+        if str(files[cursor-len(folders)]).endswith(".png") or str(files[cursor-len(folders)]).endswith(".jpeg") or str(files[cursor-len(folders)]).endswith(".jpg"):
+            if tempImage:
+                screen.blit(outline, (688, 288))
+                screen.blit(tempImage, (690, 290))
+            else:
+                loadImage(rute+files[cursor-len(folders)])
+        else:
+            if tempImage:
+                deleteImage()
 
     pygame.display.flip()
 
