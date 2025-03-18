@@ -164,11 +164,11 @@ cursor = 0
 lastcursor = 0
 lastyrealoffset = 0
 
-ejecutando = True
-while ejecutando:
+running = True
+while running:
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
-            ejecutando = False
+            running = False
         elif evento.type == pygame.MOUSEWHEEL:
             #yrealoffset += evento.y * 10
             if evento.y < 0:

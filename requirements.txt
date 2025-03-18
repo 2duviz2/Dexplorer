@@ -1,2 +1,2 @@
-pygame==2.4.0
-pywin32==306
+pygame
+pywin32
