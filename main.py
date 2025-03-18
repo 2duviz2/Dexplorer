@@ -6,6 +6,7 @@ import subprocess
 import platform
 import drives
 import tempfile
+import threading
 
 pygame.init()
 
@@ -23,6 +24,8 @@ colors = {
     "&White&": (255, 255, 255),
     "&Folder&": (0, 0, 0),
     "&File&": (50, 50, 50),
+    "&Image&": (25, 25, 75),
+    "&Executable&": (75, 25, 25),
 }
 
 size = (800, 400)
@@ -46,6 +49,17 @@ lines = []
 
 tempImage = None
 tempImagePath = None
+loadingImage = False
+currentLoadingImage = None
+t = threading.Thread()
+
+popUpText = "Popup text"
+popUpActive = False
+popUpTransparency = 0
+popUpTimer = 0
+popup = pygame.font.Font('Font.ttf', 20)
+popUpOffset = -10
+popUpOffsetY = 0
 
 def UpdateFolders():
     global text, folders, files, lines
@@ -64,7 +78,12 @@ def UpdateFolders():
                 text = text + "&Folder&" + f + "\n"
         if len(files) > 0:
             for f in files:
-                text = text + "&File&" + f + "\n"
+                fileTag = "&File&"
+                if f.endswith(".png") or f.endswith(".jpeg") or f.endswith(".jpg"):
+                    fileTag = "&Image&"
+                if f.endswith(".exe") or f.endswith(".cmd") or f.endswith(".bat") or f.endswith(".msi"):
+                    fileTag = "&Executable&"
+                text = text + fileTag + f + "\n"
     else:
         folders = drives.drivesList()
         if len(folders) > 0:
@@ -131,22 +150,43 @@ def UpdateWindowName():
     pygame.display.set_caption(f"Dexplorer > {rute}")
 
 def loadImage(r):
-    global tempImage, tempImagePath
-    if os.stat(r).st_size / (1024 * 1024) < 15:
+    global tempImage, tempImagePath, loadingImage
+    if os.stat(r).st_size / (1024 * 1024) < 100: # If image is too big, don't load it
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
                 tempImagePath = temp_file.name
             tempImage = pygame.image.load(r)
             
-            NEW_SIZE = (100, 100)
+            # get scale of tempImage
+            width = tempImage.get_width() 
+            height = tempImage.get_height()
+
+            # get a ratio of the image with a max of 100
+            if width > height:
+                ratio = 100 / width
+            else:
+                ratio = 100 / height
+
+            #NEW_SIZE = (100, 100) old formula
+            NEW_SIZE = (int(width * ratio), int(height * ratio))
             rescaledImage = pygame.transform.scale(tempImage, NEW_SIZE)
+
+            if currentLoadingImage != r: # checked before saving in case the image changes before, to save some time if the image is big
+                loadImage(currentLoadingImage)
+                return
             
             pygame.image.save(rescaledImage, tempImagePath)
+
+            if currentLoadingImage != r: # checked after saving
+                loadImage(currentLoadingImage)
+                return
             
             tempImage = pygame.image.load(tempImagePath)
         except:
             tempImage = None
             tempImagePath = None
+            # I probably should add a placeholder image here for when the image can't be loaded
+    loadingImage = False
 
 def deleteImage():
     global tempImage, tempImagePath
@@ -154,6 +194,15 @@ def deleteImage():
         os.remove(tempImagePath)
         tempImage = None
         tempImagePath = None
+
+def setPopup(msg):
+    global popUpText, popUpActive, popUpTransparency, popUpTimer, popUpOffsetY
+    popUpText = msg
+    popUpActive = True
+    popUpTransparency = 255
+    popUpTimer = 0
+    if popUpOffset != -10:
+        popUpOffsetY = 10
 
 UpdateFolders()
 
@@ -174,11 +223,13 @@ while running:
             if evento.y < 0:
                 cursor += 1
                 yrealoffset -= font.get_height() + 5
-                deleteImage()
+                if not loadingImage:
+                    deleteImage()
             else:
                 cursor -= 1
                 yrealoffset += font.get_height() + 5
-                deleteImage()
+                if not loadingImage:
+                    deleteImage()
         elif evento.type == pygame.MOUSEBUTTONUP:
             if evento.button == 1:
                 if cursor < len(folders):
@@ -191,7 +242,11 @@ while running:
                     xoffset = 20
                     UpdateFolders()
                 elif cursor < len(folders) + len(files):
-                    drives.openFile(rute+files[cursor-len(folders)])
+                    openFileResult = drives.openFile(rute+files[cursor-len(folders)])
+                    if openFileResult:
+                        setPopup(f"Opened {files[cursor-len(folders)]}")
+                    else:
+                        setPopup(f"Couldn't open {files[cursor-len(folders)]}")
             if evento.button == 3:
                 rute = drives.deleteSlash(rute)
                 #print(rute)
@@ -220,13 +275,11 @@ while running:
     y = 10 + yoffset
     l = 0
     c = 0
-    #if cursor >= len(lines):
-    #    cursor -= 1
-    #    yrealoffset += font.get_height() + 5
 
-    if cursor >= len(lines):
+    if cursor >= len(lines): # if the cursor goes out of bounds, reset to the start
         yrealoffset = 0
         cursor = 0
+
     for line in lines:
         if c < cursor-6 or c > cursor+20:
             l+=1
@@ -255,14 +308,37 @@ while running:
         y += font.get_height() + 5
     if cursor >= len(folders) and len(files) > 0:
         if str(files[cursor-len(folders)]).endswith(".png") or str(files[cursor-len(folders)]).endswith(".jpeg") or str(files[cursor-len(folders)]).endswith(".jpg"):
-            if tempImage:
+            if tempImage and not loadingImage:
                 screen.blit(outline, (688, 288))
                 screen.blit(tempImage, (690, 290))
             else:
-                loadImage(rute+files[cursor-len(folders)])
+                currentLoadingImage = rute+files[cursor-len(folders)]
+                if not loadingImage:
+                    loadingImage = True
+                    t = threading.Thread(target=loadImage, args=(rute+files[cursor-len(folders)],))
+                    t.start()
         else:
-            if tempImage:
-                deleteImage()
+            if tempImage and not loadingImage:
+                    deleteImage()
+    
+    if popUpActive:
+        popUpTimer += 1
+        if popUpTimer > 0:
+            popUpTransparency += 10
+        if popUpTransparency > 255:
+            popUpTransparency = 255
+        if popUpTimer > 500:
+            popUpTransparency -= 15
+        if popUpTransparency < 0:
+            popUpTransparency = 0
+            popUpActive = False
+            popUpOffset = -10
+            popUpTimer = 0
+        rendered_text = popup.render(popUpText, True, (0, 0, 0))
+        rendered_text.set_alpha(popUpTransparency)
+        popUpOffset = popUpOffset - (popUpOffset - rendered_text.get_width()) / 10
+        popUpOffsetY = popUpOffsetY - (popUpOffsetY - 0) / 10
+        screen.blit(rendered_text, (790 - popUpOffset, 370 - popUpOffsetY))
 
     pygame.display.flip()
 

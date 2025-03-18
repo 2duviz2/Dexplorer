@@ -22,12 +22,16 @@ def openFile(file):
     try:
         if platform.system() == 'Windows':
             subprocess.Popen([file], cwd=os.path.dirname(file), shell=True)
+            return True
         elif platform.system() == 'Linux':
             subprocess.Popen(['wine', 'cmd.exe', '/C', file], cwd=os.path.dirname(file))
+            return True
         else:
             os.system(f"xdg-open {file}")
+            return True
     except Exception as e:
         print(f"Couldn't open file {file}: {e}")
+        return False
 
 def deleteSlash(rute):
     if rute.count('/') < 2:
