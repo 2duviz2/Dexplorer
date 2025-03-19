@@ -215,12 +215,11 @@ lastyrealoffset = 0
 
 running = True
 while running:
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
             running = False
-        elif evento.type == pygame.MOUSEWHEEL:
-            #yrealoffset += evento.y * 10
-            if evento.y < 0:
+        elif event.type == pygame.MOUSEWHEEL:
+            if event.y < 0:
                 cursor += 1
                 yrealoffset -= font.get_height() + 5
                 if not loadingImage:
@@ -230,8 +229,8 @@ while running:
                 yrealoffset += font.get_height() + 5
                 if not loadingImage:
                     deleteImage()
-        elif evento.type == pygame.MOUSEBUTTONUP:
-            if evento.button == 1:
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
                 if cursor < len(folders):
                     rute = rute + folders[cursor] + "/"
                     lastcursor = cursor
@@ -247,10 +246,8 @@ while running:
                         setPopup(f"Opened {files[cursor-len(folders)]}")
                     else:
                         setPopup(f"Couldn't open {files[cursor-len(folders)]}")
-            if evento.button == 3:
+            if event.button == 3:
                 rute = drives.deleteSlash(rute)
-                #print(rute)
-                #print(eliminar_penultimo_directorio(rute))
                 cursor = lastcursor
                 yrealoffset = lastyrealoffset
                 yoffset = lastyrealoffset
@@ -258,8 +255,8 @@ while running:
                 lastcursor = 0
                 xoffset = 20
                 UpdateFolders()
-        elif evento.type == pygame.KEYDOWN:
-            Search(pygame.key.name(evento.key))
+        elif event.type == pygame.KEYDOWN:
+            Search(pygame.key.name(event.key))
 
     screen.blit(bg, (-2400/1.9, bgy-500))
     bgy = bgy - (bgy - bgrealy)/30

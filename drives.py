@@ -4,14 +4,29 @@ import win32api
 import subprocess
 import platform
 
+exceptFolders = ["$Recycle.Bin", "$RECYCLE.BIN"] # to do
+exceptFiles = ["desktop.ini"] # to do
+exceptedExtensions = [".sys", ".tmp", ".dll", ".ini"] # to do
+allowedExtensions = [".exe", ".ink", ".url", ".png", ".jpg", ".jpeg", ".mp4", ".mp3"]
+
+filterMode = "excepted" # allowed, excepted, none
+
 def listContent(r, type):
     returning = []
     try:
         with os.scandir(r) as entry:
             for e in entry:
                 if e.is_dir() and type == "folders":
+                    if e.name in exceptFolders:
+                        continue
                     returning.append(e.name)
                 elif e.is_file() and type == "files":
+                    if e.name in exceptFiles:
+                        continue
+                    if os.path.splitext(e.name)[1] in exceptedExtensions and filterMode == "excepted":
+                        continue
+                    if os.path.splitext(e.name)[1] not in allowedExtensions and filterMode == "allowed":
+                        continue
                     returning.append(e.name)
             return returning
     except PermissionError:
