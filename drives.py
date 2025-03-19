@@ -4,9 +4,9 @@ import win32api
 import subprocess
 import platform
 
-exceptFolders = ["$Recycle.Bin", "$RECYCLE.BIN"] # to do
-exceptFiles = ["desktop.ini"] # to do
-exceptedExtensions = [".sys", ".tmp", ".dll", ".ini"] # to do
+exceptFolders = ["$Recycle.Bin", "$RECYCLE.BIN"]
+exceptFiles = []
+exceptedExtensions = [".sys", ".tmp", ".dll", ".ini"]
 allowedExtensions = [".exe", ".ink", ".url", ".png", ".jpg", ".jpeg", ".mp4", ".mp3"]
 
 filterMode = "excepted" # allowed, excepted, none
