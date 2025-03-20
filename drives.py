@@ -7,9 +7,9 @@ import platform
 exceptFolders = ["$Recycle.Bin", "$RECYCLE.BIN"]
 exceptFiles = []
 exceptedExtensions = [".sys", ".tmp", ".dll", ".ini"]
-allowedExtensions = [".exe", ".ink", ".url", ".png", ".jpg", ".jpeg", ".mp4", ".mp3"]
+allowedExtensions = [".exe", ".ink", ".url", ".png", ".jpg", ".jpeg", ".mp4", ".mp3", ".wav", ".ogg", ".txt"]
 
-filterMode = "excepted" # allowed, excepted, none
+filterMode = "allowed" # allowed, excepted, none (not affects folders)
 
 def listContent(r, type):
     returning = []
