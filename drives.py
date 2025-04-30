@@ -19,6 +19,11 @@ def listContent(r, type):
                 if e.is_dir() and type == "folders":
                     if e.name in exceptFolders:
                         continue
+                    try:
+                        with os.scandir(e.path) as _:
+                            pass
+                    except PermissionError:
+                        continue
                     returning.append(e.name)
                 elif e.is_file() and type == "files":
                     if e.name in exceptFiles:

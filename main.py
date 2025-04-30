@@ -263,6 +263,16 @@ while running:
                 lastyrealoffset.pop(0)
                 xoffset = 20
                 UpdateFolders()
+            if event.button == 2:
+                #cycle through allowed, excepted and none
+                if drives.filterMode == "allowed":
+                    drives.filterMode = "excepted"
+                elif drives.filterMode == "excepted":
+                    drives.filterMode = "none"
+                else:
+                    drives.filterMode = "allowed"
+                setPopup(f"Filter mode: {drives.filterMode}")
+                UpdateFolders()
         elif event.type == pygame.KEYDOWN:
             Search(pygame.key.name(event.key))
 
@@ -294,7 +304,7 @@ while running:
             offsets.append(0)
 
     for line in lines:
-        if c < cursor-6 or c > cursor+20:
+        if c < (-int(yoffset/35))-6 or c > (-int(yoffset/35))+20:
             l+=1
             c+=1
             if l >= 100:
@@ -326,6 +336,7 @@ while running:
             l = 0
         
         y += font.get_height() + 5
+
     if cursor >= len(folders) and len(files) > 0:
         if str(files[cursor-len(folders)]).endswith(".png") or str(files[cursor-len(folders)]).endswith(".jpeg") or str(files[cursor-len(folders)]).endswith(".jpg"):
             if tempImage and not loadingImage:
