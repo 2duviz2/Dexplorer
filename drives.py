@@ -28,10 +28,10 @@ def listContent(r, type):
                     if os.path.splitext(e.name)[1] not in allowedExtensions and filterMode == "allowed":
                         continue
                     returning.append(e.name)
-            return returning
+            return returning, False
     except PermissionError:
         print(f"[{type}] Access denied trying to access: {r}")
-        return returning
+        return returning, True
     
 def openFile(file):
     try:

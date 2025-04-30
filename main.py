@@ -10,11 +10,7 @@ import threading
 
 pygame.init()
 
-WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
 LINE = (100, 100, 100)
 colors = {
     "&Red&": (255, 0, 0),
@@ -66,8 +62,10 @@ def UpdateFolders():
     text = ""
 
     if rute != "":
-        files = drives.listContent(rute, "files")
-        folders = drives.listContent(rute, "folders")
+        files, filesError = drives.listContent(rute, "files")
+        folders, foldersError = drives.listContent(rute, "folders")
+        if filesError or foldersError:
+            setPopup("Failed to load content")
         if files != None:
             files.sort(key=str.lower)
         if folders != None:
@@ -202,7 +200,7 @@ def setPopup(msg):
     popUpTransparency = 255
     popUpTimer = 0
     if popUpOffset != -10:
-        popUpOffsetY = 10
+        popUpOffsetY = 0
 
 UpdateFolders()
 
@@ -210,8 +208,11 @@ yoffset = 0
 yrealoffset = 0
 xoffset = 0
 cursor = 0
-lastcursor = 0
-lastyrealoffset = 0
+lastcursor = []
+lastyrealoffset = []
+yTop = 80
+offsets = []
+xCursorOffset = -30
 
 running = True
 while running:
@@ -233,8 +234,12 @@ while running:
             if event.button == 1:
                 if cursor < len(folders):
                     rute = rute + folders[cursor] + "/"
-                    lastcursor = cursor
-                    lastyrealoffset = yrealoffset
+                    lastcursor.reverse()
+                    lastyrealoffset.reverse()
+                    lastcursor.append(cursor)
+                    lastyrealoffset.append(yrealoffset)
+                    lastcursor.reverse()
+                    lastyrealoffset.reverse()
                     cursor = 0
                     yrealoffset = 0
                     yoffset = 0
@@ -248,11 +253,14 @@ while running:
                         setPopup(f"Couldn't open {files[cursor-len(folders)]}")
             if event.button == 3:
                 rute = drives.deleteSlash(rute)
-                cursor = lastcursor
-                yrealoffset = lastyrealoffset
-                yoffset = lastyrealoffset
-                lastyrealoffset = 0
-                lastcursor = 0
+                if len(lastcursor) == 0:
+                    lastcursor.append(0)
+                    lastyrealoffset.append(0)
+                cursor = lastcursor[0]
+                yrealoffset = lastyrealoffset[0]
+                yoffset = lastyrealoffset[0]
+                lastcursor.pop(0)
+                lastyrealoffset.pop(0)
                 xoffset = 20
                 UpdateFolders()
         elif event.type == pygame.KEYDOWN:
@@ -264,18 +272,26 @@ while running:
     if bgrealy < -2000:
         bgrealy = -2000
 
-    yoffset = yoffset - (yoffset - yrealoffset)/5
+    if yrealoffset + yTop > 10:
+        yoffset = yoffset - (yoffset - -yTop - 10)/15
+    else:
+        yoffset = yoffset - (yoffset - yrealoffset)/15
     xoffset = xoffset - (xoffset - 0)/10
     if yrealoffset > 0:
         yrealoffset = -(font.get_height() + 5) * (len(lines)-1)
         cursor = len(lines)-1
-    y = 10 + yoffset
+    y = yTop + yoffset
     l = 0
     c = 0
 
     if cursor >= len(lines): # if the cursor goes out of bounds, reset to the start
         yrealoffset = 0
         cursor = 0
+
+    if len(lines) != len(offsets):
+        offsets = []
+        for i in range(len(lines)):
+            offsets.append(0)
 
     for line in lines:
         if c < cursor-6 or c > cursor+20:
@@ -286,6 +302,13 @@ while running:
             y += font.get_height() + 5
             continue
         color = BLACK
+        cursorInLine = c == cursor
+        cursorOffset = 0
+        if cursorInLine:
+            cursorOffset = xCursorOffset
+            offsets[c] = offsets[c] - (offsets[c] - 35)/10
+        else:
+            offsets[c] = offsets[c] - (offsets[c] - 0)/10
         for tag in colors.keys():
             if line.startswith(tag):
                 color = colors[tag]
@@ -294,7 +317,7 @@ while running:
         if c == cursor:
             line = "> "+line
         rendered_text = font.render(line, True, color)
-        screen.blit(rendered_text, (30+(xoffset*(y*.1)), y))
+        screen.blit(rendered_text, (30+(xoffset*(y*.1)+offsets[c]+cursorOffset), y))
         rendered_text = lineFont.render(str(l), True, LINE)
         screen.blit(rendered_text, (0+(xoffset*(y*.1)), y))
         l+=1
