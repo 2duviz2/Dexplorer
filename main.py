@@ -255,6 +255,9 @@ while running:
                 lastcursor = 0
                 xoffset = 20
                 UpdateFolders()
+            if event.button == 2:
+                if cursor < len(folders):
+                    win32api.ShellExecute(0, "explore", rute, None, None, 1)
         elif event.type == pygame.KEYDOWN:
             Search(pygame.key.name(event.key))
 
